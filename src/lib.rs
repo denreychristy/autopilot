@@ -7,8 +7,10 @@
 use pyo3::prelude::*;
 
 mod currency;
+mod non_player_character;
 
 use currency::currency::Currency;
+use non_player_character::non_player_character::NonPlayerCharacter;
 
 // ============================================================================================== //
 
@@ -22,12 +24,12 @@ fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn rust(_py: Python, m: &PyModule) -> PyResult<()> {
+fn rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
 
-	// Currency
+	// Classes
 	m.add_class::<Currency>()?;
-
+	m.add_class::<NonPlayerCharacter>()?;
 
     Ok(())
 }

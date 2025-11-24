@@ -26,21 +26,24 @@ impl Currency {
 		}
 	}
 
-	// Getter for 'name'
+	// ================================================== //
+	// Getter Methods //
+
 	pub fn get_name(&self) -> &str {
 		&self.name 
 	}
 
-	// Getter for 'name_plural'
-	pub fn get_plural(&self) -> &str {
+	pub fn get_name_plural(&self) -> &str {
 		&self.name_plural 
 	}
 
-	// Getter for 'supply'
 	pub fn get_supply(&self) -> f64 {
 		self.supply
 	}
 
+	// ================================================== //
+	// Other Methods //
+	
 	pub fn add_money(&mut self, amount: f64) {
 		self.supply += amount
 	}

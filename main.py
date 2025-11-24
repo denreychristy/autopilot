@@ -3,13 +3,21 @@
 # ================================================================================================ #
 # Imports
 
-import rust # type: ignore
+from rust import Currency # type: ignore
+from rust import NonPlayerCharacter as NPC # type: ignore
 
 # ================================================================================================ #
 
 class AutoPilot:
 	def __init__(self):
-		print(rust.sum_as_string(2, 3))
+		currency = Currency(
+			"dollar",
+			"dollars",
+			0
+		)
+
+		npc = NPC()
+		print(npc.get_id(), npc.get_currency())
 	
 	# ================================================== #
 	# Class Methods
