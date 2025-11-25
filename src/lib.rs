@@ -8,9 +8,12 @@ use pyo3::prelude::*;
 
 mod currency;
 mod non_player_character;
+mod world;
 
 use currency::currency::Currency;
 use non_player_character::non_player_character::NonPlayerCharacter;
+use world::tile::Tile;
+use world::world::World;
 
 // ============================================================================================== //
 
@@ -30,6 +33,8 @@ fn rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
 	// Classes
 	m.add_class::<Currency>()?;
 	m.add_class::<NonPlayerCharacter>()?;
+	m.add_class::<Tile>()?;
+	m.add_class::<World>()?;
 
     Ok(())
 }
