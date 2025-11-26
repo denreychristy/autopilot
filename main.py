@@ -5,7 +5,9 @@
 
 import sys
 import pygame as pg
+
 from time import time
+from random import randint
 
 from rust import Currency # type: ignore
 from rust import NonPlayerCharacter as NPC # type: ignore
@@ -30,12 +32,12 @@ class AutoPilot:
 		pg.display.set_caption('Autopilot')
 		self.clock = pg.time.Clock()
 
-		start = time()
 		self.world = World()
-		print(time() - start)
-		start = time()
-		print(self.world.get_content(2, 4))
-		print(time() - start)
+		for _ in range(100):
+			x = randint(-1000, 1000)
+			y = randint(-1000, 1000)
+			print(f"Fetching map tile at coordinates ({x}, {y}).")
+			self.world.get(x, y)
 	
 	def run(self):
 		while True:

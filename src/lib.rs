@@ -13,6 +13,7 @@ mod world;
 use currency::currency::Currency;
 use non_player_character::non_player_character::NonPlayerCharacter;
 use world::tile::Tile;
+use world::world::Chunk;
 use world::world::World;
 
 // ============================================================================================== //
@@ -34,6 +35,7 @@ fn rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
 	m.add_class::<Currency>()?;
 	m.add_class::<NonPlayerCharacter>()?;
 	m.add_class::<Tile>()?;
+	m.add_class::<Chunk>()?;
 	m.add_class::<World>()?;
 
     Ok(())
