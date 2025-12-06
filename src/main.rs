@@ -22,6 +22,7 @@ fn main() {
 
 	// ================================================== //
 	// Plugins
+
 	app.add_plugins(
 		DefaultPlugins
 			.set(WindowPlugin{
@@ -42,14 +43,22 @@ fn main() {
 
 	// ================================================== //
 	// Systems
+	
+	app.add_systems(PreStartup, load_tile_textures);
+
 	app.add_systems(Startup, spawn_map);
 	app.add_systems(Startup, spawn_camera);
 	app.add_systems(Startup, spawn_player);
 
 	// ================================================== //
 	// Run
+
 	app.run();
 }
+
+// ============================================================================================== //
+// Resources
+
 
 // ============================================================================================== //
 // Components
@@ -62,6 +71,23 @@ pub struct WorldPosition {
 
 // ============================================================================================== //
 // Map Elements
+
+#[derive(Resource)]
+pub struct TileTextures {
+	textures: TilemapTexture,
+}
+
+pub fn load_tile_textures(mut commands: Commands, asset_server: Res<AssetServer>) {
+	let tile_texture_handles: Vec<Handle<Image>> = vec![
+		asset_server.load("tiles/grass_0.png"),
+		asset_server.load("tiles/water_0.png"),
+		asset_server.load("tiles/sand_0.png"),
+	];
+
+	let tilemap_textures: TilemapTexture = TilemapTexture::Vector(tile_texture_handles);
+
+	commands.insert_resource(TileTextures {textures: tilemap_textures});
+}
 
 #[derive(Clone)]
 pub enum Terrain {
@@ -105,18 +131,11 @@ impl Chunk {
 	}
 }
 
-pub fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
-	spawn_chunk(commands, asset_server, 0, 0);
+pub fn spawn_map(commands: Commands, tile_textures: Res<TileTextures>) {
+	spawn_chunk(commands, tile_textures, 0, 0);
 }
 
-pub fn spawn_chunk(mut commands: Commands, asset_server: Res<AssetServer>, x_map_offset: i64, y_map_offset: i64) {
-	// Load Tile Images
-	let texture_vec = TilemapTexture::Vector(vec![
-		asset_server.load("tiles/grass_0.png"),
-		asset_server.load("tiles/water_0.png"),
-		asset_server.load("tiles/sand_0.png")
-	]);
-
+pub fn spawn_chunk(mut commands: Commands, tile_textures: Res<TileTextures>, x_map_offset: i64, y_map_offset: i64) {
 //	const WATER_PERCENT: f32 = 20.0;
 //	const SAND_PERCENT: f32 = 10.0;
 //	const GRASS_START: f32 = WATER_PERCENT + SAND_PERCENT;
@@ -129,11 +148,11 @@ pub fn spawn_chunk(mut commands: Commands, asset_server: Res<AssetServer>, x_map
 	let tilemap_size = TilemapTileSize{x: TILE_WIDTH, y: TILE_HEIGHT};
 	let map_type = TilemapType::Isometric(IsoCoordSystem::Diamond);
 
-	let mut tile_storage = TileStorage::empty(map_size);
-	let tilemap_entity = commands.spawn_empty().id();
+	let mut tile_storage: TileStorage = TileStorage::empty(map_size);
+	let tilemap_entity: Entity = commands.spawn_empty().id();
 
 	// Create a new Chunk
-	let mut chunk = Chunk::new();
+	let mut chunk: Chunk = Chunk::new();
 
 	for x in 0..CHUNK_SIZE {
 		for y in 0..CHUNK_SIZE {
@@ -149,8 +168,8 @@ pub fn spawn_chunk(mut commands: Commands, asset_server: Res<AssetServer>, x_map
 			let terrain_type = Terrain::Grass;
 
 			let tile = Tile {
-				x_map: x as i64,
-				y_map: y as i64,
+				x_map: x as i64 + x_map_offset,
+				y_map: y as i64 + y_map_offset,
 				terrain: terrain_type,
 			};
 
@@ -179,7 +198,7 @@ pub fn spawn_chunk(mut commands: Commands, asset_server: Res<AssetServer>, x_map
 		grid_size,
 		size: map_size,
 		tile_size: tilemap_size,
-		texture: texture_vec,
+		texture: tile_textures.textures.clone(),
 		storage: tile_storage,
 		anchor: TilemapAnchor::Center,
 		map_type,
