@@ -5,7 +5,7 @@
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use rand::Rng;
+//use rand::Rng;
 
 // ============================================================================================== //
 // Constants
@@ -43,6 +43,7 @@ fn main() {
 	// ================================================== //
 	// Systems
 	app.add_systems(Startup, spawn_map);
+	app.add_systems(Startup, spawn_camera);
 	app.add_systems(Startup, spawn_player);
 
 	// ================================================== //
@@ -104,9 +105,11 @@ impl Chunk {
 	}
 }
 
-fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
-	commands.spawn(Camera2d);
+pub fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
+	spawn_chunk(commands, asset_server, 0, 0);
+}
 
+pub fn spawn_chunk(mut commands: Commands, asset_server: Res<AssetServer>, x_map_offset: i64, y_map_offset: i64) {
 	// Load Tile Images
 	let texture_vec = TilemapTexture::Vector(vec![
 		asset_server.load("tiles/grass_0.png"),
@@ -114,11 +117,11 @@ fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
 		asset_server.load("tiles/sand_0.png")
 	]);
 
-	const WATER_PERCENT: f32 = 20.0;
-	const SAND_PERCENT: f32 = 10.0;
-	const GRASS_START: f32 = WATER_PERCENT + SAND_PERCENT;
+//	const WATER_PERCENT: f32 = 20.0;
+//	const SAND_PERCENT: f32 = 10.0;
+//	const GRASS_START: f32 = WATER_PERCENT + SAND_PERCENT;
 
-	let mut rng = rand::rng();
+//	let mut rng = rand::rng();
 
 	// Setup map dimensions
 	let map_size = TilemapSize{x: CHUNK_SIZE as u32, y: CHUNK_SIZE as u32};
@@ -134,13 +137,16 @@ fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 	for x in 0..CHUNK_SIZE {
 		for y in 0..CHUNK_SIZE {
-			let random_value: f32 = rng.random_range(0.0 .. 100.0);
+//			let random_value: f32 = rng.random_range(0.0 .. 100.0);
+//
+//			let (texture_index, terrain_type) = match random_value {
+//				0.0 .. WATER_PERCENT => (1, Terrain::Water), 
+//				WATER_PERCENT .. GRASS_START => (2, Terrain::Sand),
+//				_ => (0, Terrain::Grass),
+//			};
 
-			let (texture_index, terrain_type) = match random_value {
-				0.0 .. WATER_PERCENT => (1, Terrain::Water), 
-				WATER_PERCENT .. GRASS_START => (2, Terrain::Sand),
-				_ => (0, Terrain::Grass),
-			};
+			let texture_index = 0;
+			let terrain_type = Terrain::Grass;
 
 			let tile = Tile {
 				x_map: x as i64,
@@ -185,6 +191,10 @@ fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 // ============================================================================================== //
 // Player
+
+pub fn spawn_camera(mut commands: Commands) {
+	commands.spawn(Camera2d);
+}
 
 #[derive(Component)]
 pub struct Player;
