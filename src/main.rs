@@ -1,16 +1,19 @@
 // Autopilot - Main
 
+#![allow(dead_code)]
+#![allow(unused_imports)]
+
 // ============================================================================================== //
 // Imports
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-//use rand::Rng;
+use rand::Rng;
 
 mod modules;
 use modules::map::{
 	chunk::*,
-	map_position::*,
+	map::*,
 	tile::*
 };
 use modules::player::*;
@@ -43,11 +46,17 @@ fn main() {
 	app.add_plugins(TilemapPlugin);
 
 	// ================================================== //
+	// Resources
+	
+	app.init_resource::<Map>();
+
+	// ================================================== //
 	// Systems
 	
 	app.add_systems(PreStartup, load_tile_textures);
 
 	app.add_systems(Startup, spawn_map);
+	app.add_systems(Startup, update_terrain_to_sand.after(spawn_map));
 	app.add_systems(Startup, spawn_camera);
 	app.add_systems(Startup, spawn_player);
 

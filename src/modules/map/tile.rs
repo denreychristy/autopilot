@@ -1,10 +1,15 @@
-// Autopilot - Player
+// Autopilot - Tile
 
 // ============================================================================================== //
 // Imports
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+
+use super::super::settings::*;
+
+// ============================================================================================== //
+// Constants
 
 // ============================================================================================== //
 
@@ -25,16 +30,23 @@ pub fn load_tile_textures(mut commands: Commands, asset_server: Res<AssetServer>
 	commands.insert_resource(TileTextures {textures: tilemap_textures});
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Terrain {
 	Grass,
 	Water,
 	Sand
 }
 
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Debug)]
 pub struct Tile {
 	pub x_map: i64,			// Where this Tile exists on the Map - x
 	pub y_map: i64,			// Where this Tile exists on the Map - y
+	pub quadrant: u64,		// Where this Tile exists on the Map - Quadrant
 	pub terrain: Terrain	// Terrain type, like grass, desert, ocean, etc.
+}
+
+impl Tile {
+	pub fn new(x_map: i64, y_map: i64, quadrant: u64, terrain: Terrain) -> Tile {
+		Tile {x_map, y_map, quadrant, terrain}
+	}
 }

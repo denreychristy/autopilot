@@ -7,38 +7,37 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
 use super::tile::*;
+use super::super::settings::*;
 
 // ============================================================================================== //
 // Constants
 
-const CHUNK_SIZE: usize	= 100;
-const TILE_WIDTH: f32	= 64.0;
-const TILE_HEIGHT: f32	= 32.0;
-
 // ============================================================================================== //
 
-
+#[derive(Clone)]
 #[derive(Component)]
 pub struct Chunk {
-	pub tiles: Vec<Tile>,	// List of tiles, in a 100x100 grid
-	pub chunk_number: u64	// This chunk's id number, via diagonal ordering within a quadrant
+	pub tiles: Vec<Tile>,		// List of tiles, in a 100x100 grid
+	pub quadrant_number: u64,	// The quadrant this chunk is located within
+	pub chunk_number: u64		// This chunk's id number, via diagonal ordering within a quadrant
 }
 
 impl Chunk {
-	pub fn new(chunk_number: u64) -> Self {
+	pub fn new(chunk_number: u64, quadrant_number: u64) -> Self {
 		let tiles: Vec<Tile> = Vec::with_capacity(CHUNK_SIZE * CHUNK_SIZE);
 		Chunk {
 			tiles,
-			chunk_number
+			chunk_number,
+			quadrant_number
 		}
 	}
 
-	/// This function returns a clone of the Tile object located at the (x_chunk, y_chunk)
-	/// coordinate pair *within the chunk itself*, as opposed to the global map (x, y) coordinate
-	/// pair.
-	pub fn get_tile(&self, x_chunk: usize, y_chunk: usize) -> Tile {
+	/// This function returns a mutable reference to the Tile object located at the
+	/// (x_chunk, y_chunk) coordinate pair *within the chunk itself*, as opposed to the global map
+	/// (x, y) coordinate pair.
+	pub fn get_tile(&mut self, x_chunk: usize, y_chunk: usize) -> &mut Tile {
 		let index: usize = CHUNK_SIZE * y_chunk + x_chunk;
-		return self.tiles[index].clone();
+		return &mut self.tiles[index];
 	}
 
 	/// This function changes the Terrain type of an existing Tile object.
@@ -48,16 +47,13 @@ impl Chunk {
 	}
 }
 
-pub fn spawn_map(commands: Commands, tile_textures: Res<TileTextures>) {
-	spawn_chunk(commands, tile_textures, 0, 0, 0);
-}
-
 pub fn spawn_chunk(
 	mut commands: Commands,
 	tile_textures: Res<TileTextures>,
 	x_map_offset: i64,
 	y_map_offset: i64,
-	chunk_number: u64
+	chunk_number: u64,
+	quadrant_number: u64
 ) {
 //	const WATER_PERCENT: f32 = 20.0;
 //	const SAND_PERCENT: f32 = 10.0;
@@ -65,7 +61,7 @@ pub fn spawn_chunk(
 
 //	let mut rng = rand::rng();
 
-	// Setup map dimensions
+	// Set up map dimensions
 	let map_size = TilemapSize{x: CHUNK_SIZE as u32, y: CHUNK_SIZE as u32};
 	let grid_size = TilemapGridSize{x: TILE_WIDTH, y: TILE_HEIGHT};
 	let tilemap_size = TilemapTileSize{x: TILE_WIDTH, y: TILE_HEIGHT};
@@ -75,23 +71,17 @@ pub fn spawn_chunk(
 	let tilemap_entity: Entity = commands.spawn_empty().id();
 
 	// Create a new Chunk
-	let mut chunk: Chunk = Chunk::new(chunk_number);
+	let mut chunk: Chunk = Chunk::new(chunk_number, quadrant_number);
 
 	for x in 0..CHUNK_SIZE {
 		for y in 0..CHUNK_SIZE {
-//			let random_value: f32 = rng.random_range(0.0 .. 100.0);
-//			let (texture_index, terrain_type) = match random_value {
-//				0.0 .. WATER_PERCENT => (1, Terrain::Water), 
-//				WATER_PERCENT .. GRASS_START => (2, Terrain::Sand),
-//				_ => (0, Terrain::Grass),
-//			};
-
 			let texture_index = 0;
 			let terrain_type = Terrain::Grass;
 
 			let tile = Tile {
 				x_map: x as i64 + x_map_offset,
 				y_map: y as i64 + y_map_offset,
+				quadrant: quadrant_number,
 				terrain: terrain_type,
 			};
 

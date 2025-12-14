@@ -5,7 +5,7 @@
 
 use bevy::prelude::*;
 
-use super::map::map_position::MapPosition;
+use super::map::map::*;
 
 // ============================================================================================== //
 
