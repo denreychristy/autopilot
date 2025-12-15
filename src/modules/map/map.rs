@@ -4,6 +4,7 @@
 // Imports
 
 use num::integer::div_floor;
+use rand::Rng;
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
@@ -41,13 +42,6 @@ pub fn get_x_y_from_chunk(chunk: usize) -> (u64, u64) {
 	if chunk == 0 {
 		return (0, 0);
 	}
-
-	// 0 -> (0, 0)
-	// 1 -> (1, 0)
-	// 2 -> (0, 1)
-	// 3 -> (2, 0)
-	// 4 -> (1, 1)
-	// 5 -> (0, 2)
 	let mut x: u64 = 0;
 	let mut y: u64 = 0;
 	let mut level: u64 = 0;
@@ -84,33 +78,42 @@ pub fn map_to_data_position(x_map: i64, y_map: i64) -> (u64, u64, u64) {
 	let chunk_number: u64;
 	let index: u64;
 
-	// Get quadrant
+	let x_offset: i64;
+	let y_offset: i64;
+
 	match (x_map >= 0, y_map >= 0) {
 		(true, true) => {
 			quadrant = 0;
+			x_offset = 0;
+			y_offset = 0;
 		}
 		(false, true) => {
 			quadrant = 1;
+			x_offset = 1;
+			y_offset = 0;
 		}
 		(false, false) => {
 			quadrant = 2;
+			x_offset = 1;
+			y_offset = 1;
 		}
 		(true, false) => {
 			quadrant = 3;
+			x_offset = 0;
+			y_offset = 1;
 		}
 	}
 
-	// Get chunk
-	let x_abs: u64 = x_map.abs() as u64;
-	let y_abs: u64 = y_map.abs() as u64;
-	chunk_number = get_chunk_number(x_abs / (CHUNK_SIZE as u64), y_abs / (CHUNK_SIZE as u64));
+	let x_abs: u64 = (x_map + x_offset).abs() as u64;
+	let y_abs: u64 = (y_map + y_offset).abs() as u64;
+	let x_chunk: u64 = div_floor(x_abs, CHUNK_SIZE as u64);
+	let y_chunk: u64 = div_floor(y_abs, CHUNK_SIZE as u64);
+	let x_within_chunk: u64 = x_abs / (CHUNK_SIZE as u64);
+	let y_within_chunk: u64 = y_abs % (CHUNK_SIZE as u64);
 
-	// Get index
-	let x_chunk: u64 = x_abs % (CHUNK_SIZE as u64);
-	let y_chunk: u64 = y_abs % (CHUNK_SIZE as u64);
-	index = x_chunk + (CHUNK_SIZE as u64) * y_chunk;
+	chunk_number = get_chunk_number(x_chunk, y_chunk);
+	index = x_within_chunk + y_within_chunk * (CHUNK_SIZE as u64);
 
-	// Return
 	return (quadrant, chunk_number, index);
 }
 
@@ -118,44 +121,43 @@ pub fn data_to_map_position(quadrant: u64, chunk_number: usize, index: usize) ->
 	let x_map: i64;
 	let y_map: i64;
 
-	let (x_main, y_main) = get_x_y_from_chunk(chunk_number);
+	let (x_chunk, y_chunk) = get_x_y_from_chunk(chunk_number);
+	let x_within_chunk: u64 = (index as u64) / (CHUNK_SIZE as u64);
+	let y_within_chunk: u64 = (index as u64) % (CHUNK_SIZE as u64);
 
-	let x_remainder: u64 = (index as u64) % (CHUNK_SIZE as u64);
-	let y_remainder: u64 = (index as u64) / (CHUNK_SIZE as u64);
-
-	let x_sign: i64;	// 1 if x is positive, -1 otherwise
-	let y_sign: i64;	// 1 if y is positive, -1 otherwise
+	let x_sign: i64;
+	let y_sign: i64;
 	let x_offset: i64;
 	let y_offset: i64;
 	match quadrant {
 		1 => {
 			x_sign = -1;
 			y_sign = 1;
-			x_offset = (CHUNK_SIZE as i64) * (x_main as i64) + 1;
-			y_offset = (CHUNK_SIZE as i64) * (y_main as i64) + 0;
+			x_offset = -1;
+			y_offset = 0;
 		}
 		2 => {
 			x_sign = -1;
 			y_sign = -1;
-			x_offset = (CHUNK_SIZE as i64) * (x_main as i64) + 1;
-			y_offset = (CHUNK_SIZE as i64) * (y_main as i64) + 1;
+			x_offset = -1;
+			y_offset = -1;
 		}
 		3 => {
 			x_sign = 1;
 			y_sign = -1;
-			x_offset = (CHUNK_SIZE as i64) * (x_main as i64) + 0;
-			y_offset = (CHUNK_SIZE as i64) * (y_main as i64) + 1;
+			x_offset = 0;
+			y_offset = -1;
 		}
 		_ => {
 			x_sign = 1;
 			y_sign = 1;
-			x_offset = (CHUNK_SIZE as i64) * (x_main as i64) + 0;
-			y_offset = (CHUNK_SIZE as i64) * (y_main as i64) + 0;
+			x_offset = 0;
+			y_offset = 0;
 		}
 	}
 
-	x_map = ((x_main * (CHUNK_SIZE as u64) + x_remainder) as i64 + x_offset) * x_sign;
-	y_map = ((y_main * (CHUNK_SIZE as u64) + y_remainder) as i64 + y_offset) * y_sign;
+	x_map = x_sign * ((x_chunk * (CHUNK_SIZE as u64) + x_within_chunk) as i64) + x_offset;
+	y_map = y_sign * ((y_chunk * (CHUNK_SIZE as u64) + y_within_chunk) as i64) + y_offset;
 
 	return (x_map, y_map);
 }
@@ -202,17 +204,25 @@ impl Map {
 	}
 
 	pub fn get_tile(&mut self, x_map: i64, y_map: i64) -> &mut Tile {
-		let (x_offset, y_offset) = match (x_map >= 0, y_map >= 0) {
-			(true, true) => {(0, 0)} // Quadrant 0
-			(false, true) => {(-1, 0)} // Quadrant 1
-			(false, false) => {(-1, -1)} // Quadrant 2
-			(true, false) => {(0, -1)} // Quadrant 3
-		};
+		let (quadrant, chunk_number, index) = map_to_data_position(x_map, y_map);
+		let chunk: &mut Chunk;
 
-		let x_within_chunk: u64 = ((x_map.abs() + x_offset) as u64) % (CHUNK_SIZE as u64);
-		let y_within_chunk: u64 = ((y_map.abs() + y_offset) as u64) % (CHUNK_SIZE as u64);
-		let chunk: &mut Chunk = self.get_chunk(x_map, y_map);
-		return chunk.get_tile(x_within_chunk as usize, y_within_chunk as usize);
+		match quadrant {
+			1 => {
+				chunk = &mut self.quadrant_1[chunk_number as usize];
+			}
+			2 => {
+				chunk = &mut self.quadrant_2[chunk_number as usize];
+			}
+			3 => {
+				chunk = &mut self.quadrant_3[chunk_number as usize];
+			}
+			_ => {
+				chunk = &mut self.quadrant_0[chunk_number as usize];
+			}
+		}
+
+		return &mut chunk.tiles[index as usize];
 	}
 
 	pub fn change_tile_terrain(&mut self, x_map: i64, y_map: i64, new_terrain: Terrain) {
@@ -242,32 +252,31 @@ pub fn spawn_map(
 		let chunk_width = CHUNK_SIZE as f32 * TILE_WIDTH;
     	let chunk_height = CHUNK_SIZE as f32 * TILE_HEIGHT;
 
+		let mut rng = rand::rng();
+
 		// Move the transform_offset in relation to the quadrant
 		let transform_offset: Vec3;
 		match quadrant {
-			0 => {
-				transform_offset = Vec3::new((0.5) * chunk_width, 0.0, 0.0);
-			}
 			1 => {
 				transform_offset = Vec3::new(0.0, -chunk_height / 2.0, 0.0);
 			}
 			2 => {
-				transform_offset = Vec3::new((-0.5)* chunk_width, 0.0, 0.0);
+				transform_offset = Vec3::new((-0.5) * chunk_width, 0.0, 0.0);
 			}
 			3 => {
 				transform_offset = Vec3::new(0.0, chunk_height / 2.0, 0.0);
 			}
 			_ => {
-				transform_offset = Vec3::ZERO;
+				transform_offset = Vec3::new((0.5) * chunk_width, 0.0, 0.0);
 			}
 		}
 
 		// My Chunk Struct
 		let mut chunk: Chunk = Chunk::new(0, quadrant);
 
-		for x in 0..CHUNK_SIZE {
-			for y in 0..CHUNK_SIZE {
-				let texture_index = 0;
+		for y in 0..CHUNK_SIZE {
+			for x in 0..CHUNK_SIZE {
+				let texture_index = rng.random_range(0..100);
 				let terrain_type = Terrain::Grass;
 
 				// My Tile Struct
@@ -288,9 +297,29 @@ pub fn spawn_map(
 			chunk.tiles.push(tile.clone());
 
 			// Bevy's TilePos
+			let bevy_x: u32;
+			let bevy_y: u32;
+			match quadrant {
+				1 => {
+					bevy_x = x as u32;
+					bevy_y = (CHUNK_SIZE - 1 - y) as u32;
+				}
+				2 => {
+					bevy_x = (CHUNK_SIZE - 1 - x) as u32;
+					bevy_y = (CHUNK_SIZE - 1 - y) as u32;
+				}
+				3 => {
+					bevy_x = (CHUNK_SIZE - 1 - x) as u32;
+					bevy_y = y as u32;
+				}
+				_ => {
+					bevy_x = x as u32;
+					bevy_y = y as u32;
+				}
+			}
 			let tile_pos = TilePos{
-				x: x.try_into().unwrap(),
-				y: y.try_into().unwrap()
+				x: bevy_x,
+				y: bevy_y
 			};
 
 			let tile_entity = commands.spawn((
@@ -341,7 +370,7 @@ pub fn update_terrain_to_sand(
 ) {
 	let min_coord = -1;
 	let max_coord = 1;
-	let sand_texture_index = 2;
+	let sand_texture_index = 101;
 
 	// Iterate over all entities that have both a Tile and a TileTextureIndex
 	for (tile, mut texture_index) in tile_query.iter_mut() {
@@ -354,10 +383,6 @@ pub fn update_terrain_to_sand(
 			texture_index.0 = sand_texture_index;
 
 			map.change_tile_terrain(tile.x_map, tile.y_map, Terrain::Sand);
-		}
-		else if tile.x_map == 0 && tile.y_map == -4 {
-			texture_index.0 = 1;
-			map.change_tile_terrain(tile.x_map, tile.y_map, Terrain::Water);
 		}
 	}
 }

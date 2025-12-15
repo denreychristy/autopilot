@@ -19,11 +19,15 @@ pub struct TileTextures {
 }
 
 pub fn load_tile_textures(mut commands: Commands, asset_server: Res<AssetServer>) {
-	let tile_texture_handles: Vec<Handle<Image>> = vec![
-		asset_server.load("tiles/grass_0.png"),
-		asset_server.load("tiles/water_0.png"),
-		asset_server.load("tiles/sand_0.png"),
-	];
+	let mut tile_texture_handles: Vec<Handle<Image>> = Vec::with_capacity(102);
+	for i in 0..100 {
+		let filename = format!("tiles/grass/grass_{}.png", i);
+		tile_texture_handles.push(
+			asset_server.load(filename)
+		)
+	}
+	tile_texture_handles.push(asset_server.load("tiles/water_0.png"));
+	tile_texture_handles.push(asset_server.load("tiles/sand_0.png"));
 
 	let tilemap_textures: TilemapTexture = TilemapTexture::Vector(tile_texture_handles);
 
