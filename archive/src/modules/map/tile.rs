@@ -34,23 +34,15 @@ pub fn load_tile_textures(mut commands: Commands, asset_server: Res<AssetServer>
 	commands.insert_resource(TileTextures {textures: tilemap_textures});
 }
 
-#[derive(Clone, Debug)]
-pub enum Terrain {
-	Grass,
-	Water,
-	Sand
-}
-
 #[derive(Clone, Component, Debug)]
 pub struct Tile {
+	pub bevy_id: Entity,	// Bevy's component entity id
 	pub x_map: i64,			// Where this Tile exists on the Map - x
 	pub y_map: i64,			// Where this Tile exists on the Map - y
-	pub quadrant: u64,		// Where this Tile exists on the Map - Quadrant
-	pub terrain: Terrain	// Terrain type, like grass, desert, ocean, etc.
 }
 
 impl Tile {
-	pub fn new(x_map: i64, y_map: i64, quadrant: u64, terrain: Terrain) -> Tile {
-		Tile {x_map, y_map, quadrant, terrain}
+	pub fn new(bevy_id: Entity, x_map: i64, y_map: i64) -> Tile {
+		Tile {bevy_id, x_map, y_map}
 	}
 }

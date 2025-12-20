@@ -225,10 +225,6 @@ impl Map {
 		return &mut chunk.tiles[index as usize];
 	}
 
-	pub fn change_tile_terrain(&mut self, x_map: i64, y_map: i64, new_terrain: Terrain) {
-		let tile: &mut Tile = &mut self.get_tile(x_map, y_map);
-		tile.terrain = new_terrain;
-	}
 }
 
 // ============================================================================================== //
@@ -277,7 +273,44 @@ pub fn spawn_map(
 		for y in 0..CHUNK_SIZE {
 			for x in 0..CHUNK_SIZE {
 				let texture_index = rng.random_range(0..100);
-				let terrain_type = Terrain::Grass;
+
+				// Bevy's TilePos
+				let bevy_x: u32;
+				let bevy_y: u32;
+				match quadrant {
+					1 => {
+						bevy_x = x as u32;
+						bevy_y = (CHUNK_SIZE - 1 - y) as u32;
+					}
+					2 => {
+						bevy_x = (CHUNK_SIZE - 1 - x) as u32;
+						bevy_y = (CHUNK_SIZE - 1 - y) as u32;
+					}
+					3 => {
+						bevy_x = (CHUNK_SIZE - 1 - x) as u32;
+						bevy_y = y as u32;
+					}
+					_ => {
+						bevy_x = x as u32;
+						bevy_y = y as u32;
+					}
+				}
+				let tile_pos = TilePos{
+					x: bevy_x,
+					y: bevy_y
+				};
+
+				let tile_entity = commands.spawn(
+					TileBundle {
+						position: tile_pos,
+						tilemap_id: TilemapId(tilemap_entity),
+						texture_index: TileTextureIndex(texture_index),
+						color: TileColor(Color::WHITE),
+						..Default::default()
+					}
+				).id();
+
+				tile_storage.set(&tile_pos, tile_entity);
 
 				// My Tile Struct
 				let index: usize = (x + y * CHUNK_SIZE) as usize;
@@ -287,53 +320,13 @@ pub fn spawn_map(
 					index
 				);
 				let tile = Tile::new(
+					tile_entity,
 					x_map,
 					y_map,
-					quadrant,
-					terrain_type
 				);
 
-			// Add Tile to Chunk
-			chunk.tiles.push(tile.clone());
-
-			// Bevy's TilePos
-			let bevy_x: u32;
-			let bevy_y: u32;
-			match quadrant {
-				1 => {
-					bevy_x = x as u32;
-					bevy_y = (CHUNK_SIZE - 1 - y) as u32;
-				}
-				2 => {
-					bevy_x = (CHUNK_SIZE - 1 - x) as u32;
-					bevy_y = (CHUNK_SIZE - 1 - y) as u32;
-				}
-				3 => {
-					bevy_x = (CHUNK_SIZE - 1 - x) as u32;
-					bevy_y = y as u32;
-				}
-				_ => {
-					bevy_x = x as u32;
-					bevy_y = y as u32;
-				}
-			}
-			let tile_pos = TilePos{
-				x: bevy_x,
-				y: bevy_y
-			};
-
-			let tile_entity = commands.spawn((
-				TileBundle {
-					position: tile_pos,
-					tilemap_id: TilemapId(tilemap_entity),
-					texture_index: TileTextureIndex(texture_index),
-					color: TileColor(Color::WHITE),
-					..Default::default()
-				},
-				tile
-			)).id();
-
-			tile_storage.set(&tile_pos, tile_entity);
+				// Add Tile to Chunk
+				chunk.tiles.push(tile.clone());
 			}
 		}
 
@@ -364,25 +357,57 @@ pub fn spawn_map(
 
 // ============================================================================================== //
 
+pub fn change_terrain(
+	map: &mut Map,
+	tile_query: &mut Query<(&Tile, &mut TileTextureIndex)>,
+	new_texture_index: u32,
+	x_map: i64,
+	y_map: i64
+) {
+	let tile = map.get_tile(x_map, y_map);
+	let result = tile_query.get_mut(tile.bevy_id);
+	match result {
+		Ok((_bevy_tile, mut texture_index)) => {
+			texture_index.0 = new_texture_index;
+		}
+		Err(e) => {
+			eprintln!("Change terrain function failed: {}", e)
+		}
+	}
+}
+
+// ============================================================================================== //
+
 pub fn update_terrain_to_sand(
 	mut map: ResMut<Map>,
 	mut tile_query: Query<(&Tile, &mut TileTextureIndex)>
 ) {
-	let min_coord = -1;
-	let max_coord = 1;
-	let sand_texture_index = 101;
+	//let min_coord = -2;
+	//let max_coord = 1;
+	//let sand_texture_index = 101;
 
 	// Iterate over all entities that have both a Tile and a TileTextureIndex
-	for (tile, mut texture_index) in tile_query.iter_mut() {
-		if tile.x_map >= min_coord 
-			&& tile.x_map <= max_coord 
-			&& tile.y_map >= min_coord 
-			&& tile.y_map <= max_coord
-		{
-			// Set the new texture index
-			texture_index.0 = sand_texture_index;
+	//for (tile, mut texture_index) in tile_query.iter_mut() {
+	//	if tile.x_map >= min_coord 
+	//		&& tile.x_map <= max_coord 
+	//		&& tile.y_map >= min_coord 
+	//		&& tile.y_map <= max_coord
+	//	{
+	//		// Set the new texture index
+	//		texture_index.0 = sand_texture_index;
 
-			map.change_tile_terrain(tile.x_map, tile.y_map, Terrain::Sand);
-		}
+	//		map.change_tile_terrain(tile.x_map, tile.y_map, Terrain::Sand);
+	//	}
+	//}
+
+	let coordinates: Vec<Vec<i64>> = vec![vec![-2, -2], vec![-1, -1]];
+	for coordinate in coordinates {
+		change_terrain(
+			&mut map,
+			&mut tile_query,
+			101,
+			coordinate[0],
+			coordinate[1]
+		);
 	}
 }

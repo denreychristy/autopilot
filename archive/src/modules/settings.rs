@@ -6,6 +6,6 @@
 // ============================================================================================== //
 // Constants
 
-pub const CHUNK_SIZE: usize = 5;
+pub const CHUNK_SIZE: usize = 100;
 pub const TILE_WIDTH: f32	= 64.0;
 pub const TILE_HEIGHT: f32	= 32.0;
