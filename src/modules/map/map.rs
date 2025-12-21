@@ -66,8 +66,8 @@ pub fn get_x_y_from_chunk(chunk: usize) -> (u64, u64) {
 
 #[derive(Component)]
 pub struct MapPosition {
-	pub x: f64,
-	pub y: f64
+	pub x_map: i64,
+	pub y_map: i64
 }
 
 // ============================================================================================== //
@@ -246,7 +246,7 @@ pub fn spawn_map(
 		let tilemap_size = TilemapTileSize{x: TILE_WIDTH, y: TILE_HEIGHT};
 		let tilemap_entity: Entity = commands.spawn_empty().id();
 		let chunk_width = CHUNK_SIZE as f32 * TILE_WIDTH;
-    	let chunk_height = CHUNK_SIZE as f32 * TILE_HEIGHT;
+		let chunk_height = CHUNK_SIZE as f32 * TILE_HEIGHT;
 
 		let mut rng = rand::rng();
 
@@ -274,6 +274,13 @@ pub fn spawn_map(
 			for x in 0..CHUNK_SIZE {
 				let texture_index = rng.random_range(0..100);
 
+				let index: usize = (x + y * CHUNK_SIZE) as usize;
+				let (x_map, y_map) = data_to_map_position(
+					quadrant,
+					0,
+					index
+				);
+
 				// Bevy's TilePos
 				let bevy_x: u32;
 				let bevy_y: u32;
@@ -300,25 +307,23 @@ pub fn spawn_map(
 					y: bevy_y
 				};
 
-				let tile_entity = commands.spawn(
+				let tile_entity = commands.spawn((
 					TileBundle {
 						position: tile_pos,
 						tilemap_id: TilemapId(tilemap_entity),
 						texture_index: TileTextureIndex(texture_index),
 						color: TileColor(Color::WHITE),
 						..Default::default()
+					},
+					MapPosition {
+						x_map,
+						y_map
 					}
-				).id();
+				)).id();
 
 				tile_storage.set(&tile_pos, tile_entity);
 
 				// My Tile Struct
-				let index: usize = (x + y * CHUNK_SIZE) as usize;
-				let (x_map, y_map) = data_to_map_position(
-					quadrant,
-					0,
-					index
-				);
 				let tile = Tile::new(
 					tile_entity,
 					x_map,
@@ -359,7 +364,7 @@ pub fn spawn_map(
 
 pub fn change_terrain(
 	map: &mut Map,
-	tile_query: &mut Query<(&Tile, &mut TileTextureIndex)>,
+	tile_query: &mut Query<(&MapPosition, &mut TileTextureIndex)>,
 	new_texture_index: u32,
 	x_map: i64,
 	y_map: i64
@@ -380,26 +385,8 @@ pub fn change_terrain(
 
 pub fn update_terrain_to_sand(
 	mut map: ResMut<Map>,
-	mut tile_query: Query<(&Tile, &mut TileTextureIndex)>
+	mut tile_query: Query<(&MapPosition, &mut TileTextureIndex)>
 ) {
-	//let min_coord = -2;
-	//let max_coord = 1;
-	//let sand_texture_index = 101;
-
-	// Iterate over all entities that have both a Tile and a TileTextureIndex
-	//for (tile, mut texture_index) in tile_query.iter_mut() {
-	//	if tile.x_map >= min_coord 
-	//		&& tile.x_map <= max_coord 
-	//		&& tile.y_map >= min_coord 
-	//		&& tile.y_map <= max_coord
-	//	{
-	//		// Set the new texture index
-	//		texture_index.0 = sand_texture_index;
-
-	//		map.change_tile_terrain(tile.x_map, tile.y_map, Terrain::Sand);
-	//	}
-	//}
-
 	let coordinates: Vec<Vec<i64>> = vec![vec![-2, -2], vec![-1, -1]];
 	for coordinate in coordinates {
 		change_terrain(

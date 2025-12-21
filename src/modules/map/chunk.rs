@@ -10,9 +10,7 @@ use super::tile::*;
 use super::super::settings::*;
 
 // ============================================================================================== //
-// Constants
-
-// ============================================================================================== //
+// struct Chunk
 
 #[derive(Clone)]
 #[derive(Component)]
@@ -21,6 +19,9 @@ pub struct Chunk {
 	pub quadrant_number: u64,	// The quadrant this chunk is located within
 	pub chunk_number: u64		// This chunk's id number, via diagonal ordering within a quadrant
 }
+
+// ============================================================================================== //
+// impl Chunk
 
 impl Chunk {
 	pub fn new(chunk_number: u64, quadrant_number: u64) -> Self {

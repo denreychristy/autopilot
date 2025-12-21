@@ -9,9 +9,7 @@ use bevy_ecs_tilemap::prelude::*;
 use super::super::settings::*;
 
 // ============================================================================================== //
-// Constants
-
-// ============================================================================================== //
+// Tile Textures
 
 #[derive(Resource)]
 pub struct TileTextures {
@@ -34,12 +32,18 @@ pub fn load_tile_textures(mut commands: Commands, asset_server: Res<AssetServer>
 	commands.insert_resource(TileTextures {textures: tilemap_textures});
 }
 
+// ============================================================================================== //
+// struct Tile
+
 #[derive(Clone, Component, Debug)]
 pub struct Tile {
 	pub bevy_id: Entity,	// Bevy's component entity id
 	pub x_map: i64,			// Where this Tile exists on the Map - x
 	pub y_map: i64,			// Where this Tile exists on the Map - y
 }
+
+// ============================================================================================== //
+// impl Tile
 
 impl Tile {
 	pub fn new(bevy_id: Entity, x_map: i64, y_map: i64) -> Tile {
