@@ -37,9 +37,9 @@ pub fn load_tile_textures(mut commands: Commands, asset_server: Res<AssetServer>
 
 #[derive(Clone, Component, Debug)]
 pub struct Tile {
-	pub bevy_id: Entity,	// Bevy's component entity id
 	pub x_map: i64,			// Where this Tile exists on the Map - x
 	pub y_map: i64,			// Where this Tile exists on the Map - y
+	pub bevy_id: Entity		// Bevy's component entity id
 }
 
 // ============================================================================================== //

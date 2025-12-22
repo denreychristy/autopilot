@@ -387,7 +387,7 @@ pub fn update_terrain_to_sand(
 	mut map: ResMut<Map>,
 	mut tile_query: Query<(&MapPosition, &mut TileTextureIndex)>
 ) {
-	let coordinates: Vec<Vec<i64>> = vec![vec![-2, -2], vec![-1, -1]];
+	let coordinates: Vec<Vec<i64>> = vec![vec![-2, -2], vec![-2, -1], vec![-2, 0]];
 	for coordinate in coordinates {
 		change_terrain(
 			&mut map,

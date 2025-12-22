@@ -29,20 +29,9 @@ fn main() {
 
 	app.add_plugins(
 		DefaultPlugins
-			.set(WindowPlugin{
-				primary_window: Some(
-					Window {
-						title: String::from(
-							"Autopilot"
-						),
-						..Default::default()
-					}
-				),
-				..default()
-			})
-			.set(ImagePlugin::default_nearest()
-			)
-	);
+			.set(WindowPlugin{primary_window: Some(Window {title: String::from("Autopilot"),
+				..Default::default()}), ..default()})
+			.set(ImagePlugin::default_nearest()));
 	app.add_plugins(TilemapPlugin);
 
 	// ================================================== //
