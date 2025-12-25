@@ -325,9 +325,9 @@ pub fn spawn_map(
 
 				// My Tile Struct
 				let tile = Tile::new(
-					tile_entity,
 					x_map,
 					y_map,
+					tile_entity
 				);
 
 				// Add Tile to Chunk
@@ -387,7 +387,9 @@ pub fn update_terrain_to_sand(
 	mut map: ResMut<Map>,
 	mut tile_query: Query<(&MapPosition, &mut TileTextureIndex)>
 ) {
-	let coordinates: Vec<Vec<i64>> = vec![vec![-2, -2], vec![-2, -1], vec![-2, 0]];
+	let coordinates: Vec<Vec<i64>> = vec![
+		vec![-2, -2], vec![-2, -1], vec![-2, 0], vec![-2, 1]
+	 ];
 	for coordinate in coordinates {
 		change_terrain(
 			&mut map,

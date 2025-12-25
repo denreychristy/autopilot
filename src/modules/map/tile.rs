@@ -46,7 +46,11 @@ pub struct Tile {
 // impl Tile
 
 impl Tile {
-	pub fn new(bevy_id: Entity, x_map: i64, y_map: i64) -> Tile {
-		Tile {bevy_id, x_map, y_map}
+	pub fn new(x_map: i64, y_map: i64, bevy_id: Entity) -> Tile {
+		Tile {
+			x_map,
+			y_map,
+			bevy_id
+		}
 	}
 }
